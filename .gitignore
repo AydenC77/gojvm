@@ -1,0 +1,10 @@
+# build output
+*.jar
+*.vsix
+*.exe
+/build/
+/dist/
+
+# editors / node
+node_modules/
+.idea/

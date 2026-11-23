@@ -1,0 +1,83 @@
+{
+  "name": "gojvm",
+  "displayName": "gojvm — Go for the JVM",
+  "description": "Write Go, run it on the JVM. Live compiler errors, Java-aware autocomplete, formatting and one-click run/build for gojvm projects.",
+  "version": "0.1.0",
+  "publisher": "aydenc77",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AydenC77/gojvm.git"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "go",
+    "jvm",
+    "java",
+    "minecraft",
+    "gojvm"
+  ],
+  "activationEvents": [
+    "workspaceContains:gojvm.json"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "gojvm.run", "title": "gojvm: Run", "icon": "$(play)" },
+      { "command": "gojvm.build", "title": "gojvm: Build jar", "icon": "$(package)" },
+      { "command": "gojvm.check", "title": "gojvm: Check (compile only)" },
+      { "command": "gojvm.doc", "title": "gojvm: Show Java class or package docs…" },
+      { "command": "gojvm.restart", "title": "gojvm: Restart language server" }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "gojvm.run",
+          "when": "gojvm.active && resourceLangId == go",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        { "command": "gojvm.run", "when": "gojvm.active" },
+        { "command": "gojvm.build", "when": "gojvm.active" },
+        { "command": "gojvm.check", "when": "gojvm.active" },
+        { "command": "gojvm.doc", "when": "gojvm.active" },
+        { "command": "gojvm.restart", "when": "gojvm.active" }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "gojvm.run",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "gojvm.active && resourceLangId == go"
+      }
+    ],
+    "snippets": [
+      { "language": "go", "path": "./snippets/gojvm.json" }
+    ],
+    "configuration": {
+      "title": "gojvm",
+      "properties": {
+        "gojvm.path": {
+          "type": "string",
+          "default": "gojvm",
+          "description": "Path to the gojvm executable (install with: go install github.com/AydenC77/gojvm@latest)."
+        },
+        "gojvm.suggestDisablingGopls": {
+          "type": "boolean",
+          "default": true,
+          "description": "Offer to disable gopls in gojvm projects (gopls cannot resolve Java imports and reports false errors)."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

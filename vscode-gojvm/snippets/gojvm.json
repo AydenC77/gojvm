@@ -1,0 +1,49 @@
+{
+  "gojvm main program": {
+    "prefix": "gjmain",
+    "body": [
+      "package main",
+      "",
+      "import (",
+      "\t\"fmt\"",
+      ")",
+      "",
+      "func main() {",
+      "\t$0",
+      "}"
+    ],
+    "description": "A runnable gojvm program"
+  },
+  "gojvm plugin class": {
+    "prefix": "gjextends",
+    "body": [
+      "//gojvm:extends ${1:java/lang/Thread}",
+      "type ${2:MyType} struct {",
+      "\t$0",
+      "}"
+    ],
+    "description": "A struct that extends a Java class"
+  },
+  "gojvm implements": {
+    "prefix": "gjimpl",
+    "body": [
+      "//gojvm:implements ${1:java/lang/Runnable}",
+      "type ${2:MyType} struct{}",
+      "",
+      "func (t *${2:MyType}) ${3:Run}() {",
+      "\t$0",
+      "}"
+    ],
+    "description": "A struct that implements a Java interface"
+  },
+  "java import": {
+    "prefix": "gjimport",
+    "body": ["import \"${1:java/util}\""],
+    "description": "Import a Java package"
+  },
+  "java new": {
+    "prefix": "gjnew",
+    "body": ["${1:list} := ${2:util}.New${3:ArrayList}($0)"],
+    "description": "Construct a Java object"
+  }
+}
