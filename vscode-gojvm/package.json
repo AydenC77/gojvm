@@ -2,7 +2,7 @@
   "name": "gojvm",
   "displayName": "gojvm — Go for the JVM",
   "description": "Write Go, run it on the JVM. Live compiler errors, Java-aware autocomplete, formatting and one-click run/build for gojvm projects.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publisher": "aydenc77",
   "repository": {
     "type": "git",
@@ -23,11 +23,15 @@
     "gojvm"
   ],
   "activationEvents": [
-    "workspaceContains:gojvm.json"
+    "workspaceContains:gojvm.json",
+    "onCommand:gojvm.newProject",
+    "onCommand:gojvm.initProject"
   ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
+      { "command": "gojvm.newProject", "title": "gojvm: New Project… (Minecraft plugins and more)" },
+      { "command": "gojvm.initProject", "title": "gojvm: New Basic Project…" },
       { "command": "gojvm.run", "title": "gojvm: Run", "icon": "$(play)" },
       { "command": "gojvm.build", "title": "gojvm: Build jar", "icon": "$(package)" },
       { "command": "gojvm.check", "title": "gojvm: Check (compile only)" },

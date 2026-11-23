@@ -1,0 +1,16 @@
+# [[.PROJECT_NAME]]
+
+[[.DESCRIPTION]]
+
+A Spigot plugin for Minecraft [[.MC_VERSION]], written in Go and compiled to JVM bytecode with
+[gojvm](https://github.com/AydenC77/gojvm).
+
+    gojvm build            # -> build/[[.PLUGIN_NAME]].jar
+    gojvm check            # compile only
+
+Copy the jar into your server's `plugins/` folder. Main class: `[[.MAIN_CLASS]]`.
+
+* `plugin.go`   – the main class (extends `JavaPlugin`)
+* `listener.go` – an event listener (`@EventHandler` via `//gojvm:annotation`)
+* `command.go`  – the `/hello` command
+* `resources/plugin.yml` – plugin metadata (bundled into the jar)

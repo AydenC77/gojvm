@@ -1,0 +1,17 @@
+//gojvm:package [[.PKG]]
+package [[.PKG_NAME]]
+
+// [[.CLASS]] is the plugin's main class. BungeeCord loads it through
+// resources/bungee.yml (main: [[.MAIN_CLASS]]).
+//
+//gojvm:extends net/md_5/bungee/api/plugin/Plugin
+type [[.CLASS]] struct{}
+
+func (p *[[.CLASS]]) OnEnable() {
+	p.GetLogger().Info("[[.PROJECT_NAME]] enabled")
+	p.GetProxy().GetPluginManager().RegisterListener(p, &JoinListener{})
+}
+
+func (p *[[.CLASS]]) OnDisable() {
+	p.GetLogger().Info("[[.PROJECT_NAME]] disabled")
+}

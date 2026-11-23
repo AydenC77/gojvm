@@ -115,7 +115,139 @@ async function showDoc() {
   });
 }
 
+// --- project wizards -------------------------------------------------------
+
+function exec(args, cwd) {
+  const { execFile } = require('child_process');
+  return new Promise((resolve, reject) => {
+    execFile(binary(), args, { cwd, maxBuffer: 64 * 1024 * 1024, timeout: 15 * 60 * 1000 }, (err, stdout, stderr) => {
+      if (err) {
+        const e = new Error((stderr || '').trim() || err.message);
+        e.stdout = stdout;
+        reject(e);
+      } else {
+        resolve(stdout);
+      }
+    });
+  });
+}
+
+function missingBinary(err) {
+  return vscode.window.showErrorMessage(
+    `gojvm: ${err.message}. Is gojvm installed? (go install github.com/AydenC77/gojvm@latest)`);
+}
+
+async function askProperty(p, index, total) {
+  const title = `New project (${index}/${total}) — ${p.label || p.name}`;
+  if (p.type === 'bool') {
+    const pick = await vscode.window.showQuickPick(['Yes', 'No'], { title, placeHolder: p.help || p.label });
+    return pick === undefined ? undefined : (pick === 'Yes' ? 'true' : 'false');
+  }
+  if (p.type === 'select' && p.options && p.options.length) {
+    const items = p.options.map((o, i) => ({ label: o, description: i === 0 ? 'latest' : undefined }));
+    const pick = await vscode.window.showQuickPick(items, { title, placeHolder: p.help || p.label });
+    return pick === undefined ? undefined : pick.label;
+  }
+  return vscode.window.showInputBox({ title, prompt: p.help || undefined, value: p.default || '', ignoreFocusOut: true });
+}
+
+async function pickParentFolder() {
+  const picked = await vscode.window.showOpenDialog({
+    canSelectFolders: true, canSelectFiles: false, canSelectMany: false,
+    openLabel: 'Create project here', title: 'Choose where to create the project',
+  });
+  return picked && picked[0] ? picked[0].fsPath : undefined;
+}
+
+async function offerOpen(dir) {
+  const pick = await vscode.window.showInformationMessage(
+    `Project created in ${dir}`, 'Open', 'Open in new window');
+  if (pick) {
+    vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(dir), { forceNewWindow: pick !== 'Open' });
+  }
+}
+
+async function newProject() {
+  let templates;
+  try {
+    templates = JSON.parse(await exec(['new', '--list', '--json']));
+  } catch (err) {
+    return missingBinary(err);
+  }
+  const pick = await vscode.window.showQuickPick(
+    templates.map((t) => ({ label: t.name, description: t.group, detail: t.description, id: t.id })),
+    { title: 'gojvm: New Project', placeHolder: 'Choose a template', matchOnDetail: true });
+  if (!pick) return;
+
+  let manifest;
+  try {
+    manifest = await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: 'gojvm: looking up versions…' },
+      async () => JSON.parse(await exec(['new', '-t', pick.id, '--describe', '--json'])));
+  } catch (err) {
+    return vscode.window.showErrorMessage(`gojvm: ${err.message}`);
+  }
+
+  const answers = {};
+  const props = manifest.properties || [];
+  for (let i = 0; i < props.length; i++) {
+    const v = await askProperty(props[i], i + 1, props.length);
+    if (v === undefined) return; // cancelled
+    answers[props[i].name] = v;
+  }
+
+  const parent = await pickParentFolder();
+  if (!parent) return;
+  const base = (answers.PROJECT_NAME || pick.id).replace(/\s+/g, '');
+  const dir = path.join(parent, base);
+  if (require('fs').existsSync(dir)) {
+    return vscode.window.showErrorMessage(`gojvm: ${dir} already exists.`);
+  }
+
+  const args = ['new', '-t', pick.id, dir, '--yes'];
+  for (const [k, v] of Object.entries(answers)) args.push('--set', `${k}=${v}`);
+  try {
+    const out = await vscode.window.withProgress(
+      { location: vscode.ProgressLocation.Notification, title: `gojvm: creating ${base} (downloading dependencies…)` },
+      () => exec(args));
+    if (/problem:/.test(out)) {
+      vscode.window.showWarningMessage('gojvm: project created, but the test build reported a problem. Run "gojvm: Check" to see it.');
+    }
+  } catch (err) {
+    return vscode.window.showErrorMessage(`gojvm: ${err.message}`);
+  }
+  offerOpen(dir);
+}
+
+async function initProject() {
+  const name = await vscode.window.showInputBox({
+    title: 'gojvm: New Basic Project', prompt: 'Project folder name', value: 'myapp', ignoreFocusOut: true,
+    validateInput: (v) => (/^[\w.-]+$/.test(v || '') ? undefined : 'Use letters, digits, - _ . only'),
+  });
+  if (!name) return;
+  const parent = await pickParentFolder();
+  if (!parent) return;
+  const dir = path.join(parent, name);
+  try {
+    await exec(['init', dir]);
+  } catch (err) {
+    return vscode.window.showErrorMessage(`gojvm: ${err.message}`);
+  }
+  offerOpen(dir);
+}
+
+async function hasProject() {
+  const found = await vscode.workspace.findFiles('gojvm.json', '**/node_modules/**', 1);
+  return found.length > 0;
+}
+
 async function activate(context) {
+  context.subscriptions.push(
+    vscode.commands.registerCommand('gojvm.newProject', newProject),
+    vscode.commands.registerCommand('gojvm.initProject', initProject)
+  );
+  // Language features only inside gojvm projects; the wizards work anywhere.
+  if (!(await hasProject())) return;
   vscode.commands.executeCommand('setContext', 'gojvm.active', true);
   statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
   statusItem.text = '$(sync~spin) gojvm';

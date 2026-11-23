@@ -1,0 +1,13 @@
+package [[.PKG_NAME]]
+
+import "org/bukkit/command"
+
+// HelloCommand implements /hello (declared in resources/plugin.yml).
+//
+//gojvm:implements org/bukkit/command/CommandExecutor
+type HelloCommand struct{}
+
+func (c *HelloCommand) OnCommand(sender *command.CommandSender, cmd *command.Command, label string, args []string) bool {
+	sender.SendMessage("Hello from [[.PROJECT_NAME]]!")
+	return true
+}

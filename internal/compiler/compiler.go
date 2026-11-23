@@ -46,6 +46,7 @@ type funcInfo struct {
 	recvPtr  bool
 	recvName string
 	jname    string // JVM method name (differs from name when overriding a Java method)
+	annots   []jvm.Annotation
 }
 
 type object struct {
@@ -235,6 +236,12 @@ func compile(fset *token.FileSet, files []*ast.File, cp *jvm.ClassPath, opts Opt
 	c.lib = pkg != "main"
 	if c.lib {
 		c.prefix = pkg + "/"
+	}
+	// //gojvm:package com.example.myplugin above the package clause sets the JVM package
+	for _, f := range files {
+		if v := directiveLines(f.Doc)["package"]; len(v) > 0 && strings.TrimSpace(v[0]) != "" {
+			c.prefix = strings.Trim(strings.ReplaceAll(strings.TrimSpace(v[0]), ".", "/"), "/") + "/"
+		}
 	}
 	c.mainName = c.prefix + mainClass
 	c.cls = jvm.NewClass(c.mainName, "java/lang/Object")
@@ -471,6 +478,7 @@ func (c *Compiler) declareFunc(fd *ast.FuncDecl) {
 	sb.WriteByte(')')
 	sb.WriteString(fi.ret.Desc())
 	fi.desc = sb.String()
+	fi.annots = c.parseAnnotations(fd, directiveLines(fd.Doc)["annotation"])
 	if fd.Recv != nil {
 		c.declareMethod(fd, fi)
 		c.funcs = append(c.funcs, fi)
@@ -530,7 +538,7 @@ func (c *Compiler) compileFunc(fi *funcInfo) {
 	if fi.recv != nil {
 		access = jvm.AccPublic
 	}
-	cls.Methods = append(cls.Methods, &jvm.Method{Access: access, Name: methodName(fi), Desc: fi.desc, Code: code})
+	cls.Methods = append(cls.Methods, &jvm.Method{Access: access, Name: methodName(fi), Desc: fi.desc, Code: code, Annotations: fi.annots})
 }
 
 // ---------------------------------------------------------------------------

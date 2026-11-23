@@ -1,0 +1,23 @@
+{
+  "id": "spigot-plugin",
+  "name": "Spigot plugin",
+  "group": "Minecraft",
+  "description": "A Spigot server plugin (also runs on Paper) with a join listener and a /hello command.",
+  "properties": [
+    {"name": "PROJECT_NAME", "label": "Plugin name", "type": "string", "default": "MyPlugin"},
+    {"name": "GROUP_ID", "label": "Group / base package", "type": "string", "default": "com.example", "help": "Reverse-domain prefix of the plugin's Java package"},
+    {"name": "MC_VERSION", "label": "Minecraft version", "type": "select", "dynamic": "spigot_versions", "options": ["1.21.4", "1.21.1", "1.20.6"], "help": "Only versions that run on Java 21+ are offered"},
+    {"name": "DESCRIPTION", "label": "Description", "type": "string", "default": "A plugin written in Go"},
+    {"name": "AUTHOR", "label": "Author", "type": "string", "default": ""}
+  ],
+  "derived": [
+    {"name": "PLUGIN_NAME", "expr": "[[nospace .PROJECT_NAME]]"},
+    {"name": "CLASS", "expr": "[[pascal .PROJECT_NAME]]"},
+    {"name": "PKG_NAME", "expr": "[[lower (identifier .PROJECT_NAME)]]"},
+    {"name": "PKG", "expr": "[[.GROUP_ID]].[[.PKG_NAME]]"},
+    {"name": "MAIN_CLASS", "expr": "[[.PKG]].[[.CLASS]]"},
+    {"name": "API_VERSION", "expr": "[[spigotApi .MC_VERSION]]"},
+    {"name": "PLUGIN_API", "expr": "[[apiVersion .MC_VERSION]]"}
+  ],
+  "notes": "Build with `gojvm build`, then copy build/[[.PLUGIN_NAME]].jar into your server's plugins/ folder.\nMain class: [[.MAIN_CLASS]]"
+}

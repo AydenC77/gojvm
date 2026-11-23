@@ -9,9 +9,10 @@ import (
 )
 
 type Field struct {
-	Access uint16
-	Name   string
-	Desc   string
+	Access      uint16
+	Name        string
+	Desc        string
+	Annotations []Annotation
 }
 
 type Method struct {
@@ -19,17 +20,20 @@ type Method struct {
 	Name   string
 	Desc   string
 	Code   *Code // nil for abstract/native
+
+	Annotations []Annotation
 }
 
 type Class struct {
-	Name       string
-	Super      string
-	Access     uint16
-	SourceFile string
-	CP         *ConstPool
-	Interfaces []string
-	Fields     []Field
-	Methods    []*Method
+	Name        string
+	Super       string
+	Access      uint16
+	SourceFile  string
+	CP          *ConstPool
+	Interfaces  []string
+	Annotations []Annotation
+	Fields      []Field
+	Methods     []*Method
 }
 
 func NewClass(name, super string) *Class {
@@ -50,7 +54,10 @@ func (cl *Class) Bytes() ([]byte, error) {
 		u16(&fields, int(f.Access))
 		u16(&fields, cp.Utf8(f.Name))
 		u16(&fields, cp.Utf8(f.Desc))
-		u16(&fields, 0)
+		var fa bytes.Buffer
+		n := cp.annotationAttribute(&fa, f.Annotations)
+		u16(&fields, n)
+		fields.Write(fa.Bytes())
 	}
 
 	var methods bytes.Buffer
@@ -58,8 +65,11 @@ func (cl *Class) Bytes() ([]byte, error) {
 		u16(&methods, int(m.Access))
 		u16(&methods, cp.Utf8(m.Name))
 		u16(&methods, cp.Utf8(m.Desc))
+		var ma bytes.Buffer
+		nma := cp.annotationAttribute(&ma, m.Annotations)
 		if m.Code == nil {
-			u16(&methods, 0)
+			u16(&methods, nma)
+			methods.Write(ma.Bytes())
 			continue
 		}
 		code, err := m.Code.Finish()
@@ -98,10 +108,11 @@ func (cl *Class) Bytes() ([]byte, error) {
 		u16(&body, nattr)
 		body.Write(attrs.Bytes())
 
-		u16(&methods, 1)
+		u16(&methods, 1+nma)
 		u16(&methods, cp.Utf8("Code"))
 		u32(&methods, uint32(body.Len()))
 		methods.Write(body.Bytes())
+		methods.Write(ma.Bytes())
 	}
 
 	var extra bytes.Buffer
@@ -113,6 +124,7 @@ func (cl *Class) Bytes() ([]byte, error) {
 		nextra++
 	}
 
+	nextra += cp.annotationAttribute(&extra, cl.Annotations)
 	if cp.Count() > 65535 {
 		return nil, fmt.Errorf("constant pool too large")
 	}

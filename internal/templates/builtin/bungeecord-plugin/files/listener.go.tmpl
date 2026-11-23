@@ -1,0 +1,17 @@
+package [[.PKG_NAME]]
+
+import (
+	"net/md_5/bungee/api/chat"
+	"net/md_5/bungee/api/event"
+)
+
+// JoinListener reacts to proxy events. BungeeCord finds handler methods by
+// their @EventHandler annotation.
+//
+//gojvm:implements net/md_5/bungee/api/plugin/Listener
+type JoinListener struct{}
+
+//gojvm:annotation net/md_5/bungee/event/EventHandler
+func (l *JoinListener) OnLogin(e *event.PostLoginEvent) {
+	e.GetPlayer().SendMessage(chat.NewTextComponent("Welcome to the network!"))
+}

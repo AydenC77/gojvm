@@ -1,0 +1,6 @@
+{
+  "go.useLanguageServer": false,
+  "[go]": {
+    "editor.formatOnSave": true
+  }
+}

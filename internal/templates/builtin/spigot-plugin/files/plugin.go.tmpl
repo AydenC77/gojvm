@@ -1,0 +1,18 @@
+//gojvm:package [[.PKG]]
+package [[.PKG_NAME]]
+
+// [[.CLASS]] is the plugin's main class. Spigot loads it through
+// resources/plugin.yml (main: [[.MAIN_CLASS]]).
+//
+//gojvm:extends org/bukkit/plugin/java/JavaPlugin
+type [[.CLASS]] struct{}
+
+func (p *[[.CLASS]]) OnEnable() {
+	p.GetLogger().Info("[[.PROJECT_NAME]] enabled")
+	p.GetServer().GetPluginManager().RegisterEvents(&JoinListener{}, p)
+	p.GetCommand("hello").SetExecutor(&HelloCommand{})
+}
+
+func (p *[[.CLASS]]) OnDisable() {
+	p.GetLogger().Info("[[.PROJECT_NAME]] disabled")
+}

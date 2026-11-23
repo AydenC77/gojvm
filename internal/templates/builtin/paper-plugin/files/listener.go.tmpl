@@ -1,0 +1,14 @@
+package [[.PKG_NAME]]
+
+import "org/bukkit/event/player"
+
+// JoinListener reacts to events. Paper finds handler methods by their
+// @EventHandler annotation.
+//
+//gojvm:implements org/bukkit/event/Listener
+type JoinListener struct{}
+
+//gojvm:annotation org/bukkit/event/EventHandler
+func (l *JoinListener) OnJoin(e *player.PlayerJoinEvent) {
+	e.GetPlayer().SendMessage("Welcome to the server!")
+}

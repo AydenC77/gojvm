@@ -1,0 +1,21 @@
+{
+  "id": "bungeecord-plugin",
+  "name": "BungeeCord plugin",
+  "group": "Minecraft",
+  "description": "A BungeeCord / Waterfall proxy plugin with a login listener.",
+  "properties": [
+    {"name": "PROJECT_NAME", "label": "Plugin name", "type": "string", "default": "MyProxyPlugin"},
+    {"name": "GROUP_ID", "label": "Group / base package", "type": "string", "default": "com.example", "help": "Reverse-domain prefix of the plugin's Java package"},
+    {"name": "BUNGEE_API", "label": "BungeeCord API version", "type": "select", "dynamic": "bungee_versions", "options": ["1.21-R0.4", "1.20-R0.2"]},
+    {"name": "DESCRIPTION", "label": "Description", "type": "string", "default": "A proxy plugin written in Go"},
+    {"name": "AUTHOR", "label": "Author", "type": "string", "default": ""}
+  ],
+  "derived": [
+    {"name": "PLUGIN_NAME", "expr": "[[nospace .PROJECT_NAME]]"},
+    {"name": "CLASS", "expr": "[[pascal .PROJECT_NAME]]"},
+    {"name": "PKG_NAME", "expr": "[[lower (identifier .PROJECT_NAME)]]"},
+    {"name": "PKG", "expr": "[[.GROUP_ID]].[[.PKG_NAME]]"},
+    {"name": "MAIN_CLASS", "expr": "[[.PKG]].[[.CLASS]]"}
+  ],
+  "notes": "Build with `gojvm build`, then copy build/[[.PLUGIN_NAME]].jar into your proxy's plugins/ folder.\nMain class: [[.MAIN_CLASS]]"
+}

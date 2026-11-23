@@ -154,3 +154,60 @@ func main() {}`,
 		}
 	}
 }
+
+func TestAnnotationsAndPackage(t *testing.T) {
+	got, errs := compileRun(t, `//gojvm:package com.example.demo
+package main
+
+import (
+	"fmt"
+	"java/lang"
+)
+
+//gojvm:annotation java/lang/Deprecated since="2.0" forRemoval=true
+type Thing struct {
+	//gojvm:annotation java/lang/Deprecated
+	Name string
+}
+
+//gojvm:annotation java/lang/Deprecated since="9"
+func (t *Thing) Hello() string { return "hi" }
+
+func main() {
+	c := lang.Class.ForName("com.example.demo.Thing")
+	fmt.Println(len(c.GetAnnotations()), len(c.GetField("Name").GetAnnotations()), len(c.GetMethod("Hello").GetAnnotations()))
+}`)
+	if len(errs) > 0 {
+		t.Fatal(errs)
+	}
+	if got != "1 1 1\n" {
+		t.Fatalf("got %q", got)
+	}
+
+	bad := map[string]string{
+		"has no element":       "//gojvm:annotation java/lang/Deprecated nope=1",
+		"not found":            "//gojvm:annotation no/such/Annotation",
+		"is not an annotation": "//gojvm:annotation java/lang/String",
+		"expects type":         "//gojvm:annotation java/lang/Deprecated forRemoval=maybe",
+	}
+	for want, directive := range bad {
+		_, errs := compileRun(t, "package main\n\n"+directive+"\ntype T struct{}\nfunc main() {}")
+		if len(errs) == 0 || !strings.Contains(strings.Join(errs, "\n"), want) {
+			t.Errorf("want error containing %q, got %v", want, errs)
+		}
+	}
+}
+
+func TestMultipleErrorsReported(t *testing.T) {
+	_, errs := compileRun(t, `package main
+func main() {
+	var a int = "x"
+	b := undefined + 1
+	var c string = 5
+	_ = b + a // a failed to declare: no second error
+	_ = c
+}`)
+	if len(errs) != 3 {
+		t.Fatalf("want 3 independent errors (and no cascades), got %d: %v", len(errs), errs)
+	}
+}

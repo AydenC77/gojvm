@@ -1,0 +1,12 @@
+name: [[.PLUGIN_NAME]]
+version: "1.0.0"
+main: [[.MAIN_CLASS]]
+api-version: "[[.PLUGIN_API]]"
+description: [[yamlstr .DESCRIPTION]]
+[[- if .AUTHOR]]
+authors: [ [[yamlstr .AUTHOR]] ]
+[[- end]]
+commands:
+  hello:
+    description: Say hello
+    usage: /hello

@@ -16,16 +16,19 @@ import (
 
 	"github.com/AydenC77/gojvm/internal/compiler"
 	"github.com/AydenC77/gojvm/internal/jvm"
+	"github.com/AydenC77/gojvm/internal/maven"
 )
 
 const ConfigName = "gojvm.json"
 
 // Config is the contents of gojvm.json. Every field is optional.
 type Config struct {
-	Classpath []string `json:"classpath,omitempty"` // extra jars (relative to gojvm.json)
-	Resources string   `json:"resources,omitempty"` // directory bundled into the jar root
-	Output    string   `json:"output,omitempty"`    // output jar path
-	JDK       string   `json:"jdk,omitempty"`       // JDK 21 home
+	Classpath    []string `json:"classpath,omitempty"`    // extra jars (relative to gojvm.json)
+	Repositories []string `json:"repositories,omitempty"` // extra Maven repository URLs (Maven Central is always used)
+	Dependencies []string `json:"dependencies,omitempty"` // Maven coordinates: group:artifact:version
+	Resources    string   `json:"resources,omitempty"`    // directory bundled into the jar root
+	Output       string   `json:"output,omitempty"`       // output jar path
+	JDK          string   `json:"jdk,omitempty"`          // JDK 21 home
 
 	Dir   string `json:"-"` // directory holding gojvm.json (or the start directory)
 	Found bool   `json:"-"`
@@ -95,8 +98,9 @@ func GoFiles(dir string) ([]string, error) {
 
 // Session holds an open classpath for a project.
 type Session struct {
-	Cfg *Config
-	CP  *jvm.ClassPath
+	Cfg  *Config
+	CP   *jvm.ClassPath
+	Jars []string // every jar on the classpath: gojvm.json classpath + resolved dependencies
 }
 
 func Open(cfg *Config, jdkOverride string, extraJars ...string) (*Session, error) {
@@ -105,11 +109,18 @@ func Open(cfg *Config, jdkOverride string, extraJars ...string) (*Session, error
 		jdk = cfg.JDK
 	}
 	jars := append(cfg.Jars(), extraJars...)
+	if len(cfg.Dependencies) > 0 {
+		resolved, err := maven.NewResolver(cfg.Repositories, os.Stderr).Resolve(cfg.Dependencies)
+		if err != nil {
+			return nil, err
+		}
+		jars = append(jars, resolved...)
+	}
 	cp, err := jvm.NewClassPath(jdk, jars...)
 	if err != nil {
 		return nil, err
 	}
-	return &Session{Cfg: cfg, CP: cp}, nil
+	return &Session{Cfg: cfg, CP: cp, Jars: jars}, nil
 }
 
 func (s *Session) Close() { s.CP.Close() }

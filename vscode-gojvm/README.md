@@ -9,6 +9,8 @@ editor understands Java imports (which `gopls` cannot).
 
 ## Features
 
+* **New Project wizard** (`gojvm: New Project…`): Paper, Spigot and BungeeCord plugin templates
+  with live Minecraft version lists. `gojvm: New Basic Project…` creates a plain program.
 * Live compiler errors as you type (all errors in a file, not just the first).
 * Autocomplete for Java: `import "java/…"` paths, classes and `NewClass` constructors after
   `util.`, static members after `lang.Math.`, instance methods after any Java value, fields and

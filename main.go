@@ -23,7 +23,8 @@ import (
 const usageText = `gojvm - compile Go to JVM bytecode (Java 21) and run it anywhere Java runs
 
 Usage:
-  gojvm init  [dir] [-lib name]   create a new project (-lib: a plugin/library package)
+  gojvm new   [-t template] [dir] create a project from a template (Minecraft plugins, ...)
+  gojvm init  [dir] [-lib name]   create a basic project (-lib: a library package)
   gojvm run   [path] [-- args]    compile and run a program
   gojvm build [path] [-o out.jar] compile to a jar (library jar if the package isn't main)
   gojvm check [path]              compile only, report errors
@@ -50,6 +51,8 @@ func main() {
 		code = cmdBuild(args, modeCheck)
 	case "init":
 		code = cmdInit(args)
+	case "new":
+		code = cmdNew(args)
 	case "doc":
 		code = cmdDoc(args)
 	case "lsp":
@@ -243,7 +246,7 @@ func cmdBuild(args []string, m mode) int {
 		fmt.Printf("built %s (%s)\n", jar, kind)
 		return 0
 	}
-	cpath := strings.Join(append([]string{jar}, cfg.Jars()...), string(os.PathListSeparator))
+	cpath := strings.Join(append([]string{jar}, sess.Jars...), string(os.PathListSeparator))
 	cmd := exec.Command(filepath.Join(sess.CP.Home, "bin", "java"),
 		append([]string{"-cp", cpath, strings.ReplaceAll(res.MainClass, "/", ".")}, progArgs...)...)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr

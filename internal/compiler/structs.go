@@ -96,13 +96,16 @@ func (c *Compiler) declareTypes(gd *ast.GenDecl) {
 				si.super = v[0]
 			case "implements":
 				si.ifaces = v
+			case "annotation":
+				// handled below with the raw directive text
 			default:
 				c.fail(ts, "unknown directive //gojvm:%s", k)
 			}
 		}
 		si.cls = jvm.NewClass(jn, si.super)
 		si.cls.Interfaces = si.ifaces
-		si.cls.SourceFile = c.cls.SourceFile
+		si.cls.Annotations = c.parseAnnotations(ts, directiveLines(gd.Doc, ts.Doc)["annotation"])
+		si.cls.SourceFile = filepath.Base(c.fset.Position(ts.Pos()).Filename)
 		c.structs[jn] = si
 		c.structOrder = append(c.structOrder, si)
 		c.pkgScope.names[name] = &object{kind: oType, name: name, typ: Type{K: KStruct, Class: jn}}
@@ -151,12 +154,13 @@ func (c *Compiler) resolveFields(si *structInfo) {
 		if t.K == KStruct && t.Class == si.jname {
 			c.fail(f, "invalid recursive type %s", si.jname)
 		}
+		anns := c.parseAnnotations(f, directiveLines(f.Doc)["annotation"])
 		for _, n := range f.Names {
 			if _, dup := si.field(n.Name); dup {
 				c.fail(n, "%s redeclared", n.Name)
 			}
 			si.fields = append(si.fields, fieldInfo{n.Name, t})
-			si.cls.Fields = append(si.cls.Fields, jvm.Field{Access: jvm.AccPublic, Name: n.Name, Desc: t.Desc()})
+			si.cls.Fields = append(si.cls.Fields, jvm.Field{Access: jvm.AccPublic, Name: n.Name, Desc: t.Desc(), Annotations: anns})
 		}
 	}
 }
